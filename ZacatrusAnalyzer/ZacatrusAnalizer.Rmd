@@ -3,16 +3,217 @@ title: "Zacatrus Analyzer"
 output: html_notebook
 ---
 
-Comencem carregant les dades del csv 
+Comencem carregant les llibreries i les dades del csv 
 
 ```{r}
+
+library(dplyr)
+library(stringr)
+require(stringi)
+
 zacatrus_data <- read.csv("C:\\Users\\Jose\\Dropbox\\UOC\\20202021-02\\TCVD\\Pr2\\games_wih_rating.csv", sep=';', header=TRUE)
 
-zacatrus_data
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+Eliminem les files dels jocs de kilometre 0
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+
+zacatrus_data <- dplyr::filter(zacatrus_data, !grepl("Kilómetro 0",Nombre))
+
+```
+
+Eliminem les columnes Num..Id, Disponibilidad, BGG i Idioma
+
+```{r}
+
+zacatrus_data <- select(zacatrus_data,-Num..Id, -Disponibilidad, -BGG, -Idioma )
+
+```
+
+Del nom, ens quedem només amb la primera paraula més gran de 3 lletres
+
+
+```{r}
+
+zacatrus_data <- transform(zacatrus_data, Nombre = str_replace_all(Nombre, regex("\\W+"), " "))
+zacatrus_data <- transform(zacatrus_data, Nombre= ifelse(stri_length(word(Nombre,1))>3, word(Nombre,1), ifelse(stri_length(word(Nombre,2))>3, word(Nombre,2), word(Nombre,3))))
+
+```
+A partir dels valors al camp "Temática", construim 42 columnes amb valors booleans que per cada tematica indica si el joc pertany o no.
+[0-9|-]+
+
+```{r}
+
+
+zacatrus_data <- transform(zacatrus_data, Tem_Abstracto =  grepl("Abstracto",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Comercio =  grepl("Comercio",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Egipto =  grepl("Egipto",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Medicina =  grepl("Medicina",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Oriental =  grepl("Oriental",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Trenes =  grepl("Trenes",Temática))
+
+zacatrus_data <- transform(zacatrus_data, Tem_Agricultura =  grepl("Agricultura",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Cómic =  grepl("Cómic",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Electrónica =  grepl("Electrónica",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Medieval =  grepl("Medieval",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Piratas =  grepl("Piratas",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Audiovisual =  grepl("TV/Series/Cine",Temática))
+
+zacatrus_data <- transform(zacatrus_data, Tem_Animales =  grepl("Animales",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Cuentos =  grepl("Cuentos",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_EspadaBrujería =  grepl("Espada y Brujería",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Misterio =  grepl("Misterio",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Politica =  grepl("Politica",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Urbano =  grepl("Urbano",Temática))
+
+zacatrus_data <- transform(zacatrus_data, Tem_ArteLiteratura =  grepl("Arte y Literatura",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Cyberpunk =  grepl("Cyberpunk",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Fantasía =  grepl("Fantasía",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Mitología =  grepl("Mitología",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Postapocalíptico =  grepl("Postapocalíptico",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Vampiros =  grepl("Vampiros",Temática))
+
+zacatrus_data <- transform(zacatrus_data, Tem_Carreras =  grepl("Carreras",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Deportes =  grepl("Deportes",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Gastronómica =  grepl("Gastronómica",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Música =  grepl("Música",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Steampunk =  grepl("Steampunk",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Videojuegos =  grepl("Videojuegos",Temática))
+
+zacatrus_data <- transform(zacatrus_data, Tem_Ciencia =  grepl("Ciencia",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Detectivesca =  grepl("Detectivesca",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Historia =  grepl("Historia",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Naturaleza =  grepl("Naturaleza",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Superhéroes =  grepl("Superhéroes",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Vikingos =  grepl("Vikingos",Temática))
+
+zacatrus_data <- transform(zacatrus_data, Tem_CienciaFicción =  grepl("Ciencia Ficción",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Dinosaurios =  grepl("Dinosaurios",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Maya =  grepl("Maya",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Oeste =  grepl("Oeste",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Terror =  grepl("Terror",Temática))
+zacatrus_data <- transform(zacatrus_data, Tem_Zombies =  grepl("Zombies",Temática))
+
+zacatrus_data <- select(zacatrus_data,-Temática)
+
+```
+
+A partir dels valors al camp "Si Buscas…", construim 12 columnes amb valors booleans que per cada tematica indica si el joc pertany o no.
+
+
+```{r}
+
+
+zacatrus_data <- transform(zacatrus_data, SiB_Ameritrash =  grepl("Ameritrash",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Cooperativo =  grepl("Cooperativo",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Eurogame =  grepl("Eurogame",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Experiencia =  grepl("Experiencia",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Familiares =  grepl("Familiares",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Fiesta =  grepl("Fiesta",Si.Buscas...))
+
+zacatrus_data <- transform(zacatrus_data, SiB_Infantil =  grepl("Infantil",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Narrativo =  grepl("Narrativo",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_ParaDos =  grepl("Para 2",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Rápido =  grepl("Rápido",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Solitario =  grepl("Solitario",Si.Buscas...))
+zacatrus_data <- transform(zacatrus_data, SiB_Viaje =  grepl("Viaje",Si.Buscas...))
+
+zacatrus_data <- select(zacatrus_data,-Si.Buscas...)
+
+```
+
+A partir dels valors al camp "Edat", construim dues columnes, una amb l'edat mínima, i una altra amb la màxima.
+
+
+```{r}
+
+
+zacatrus_data <- transform(zacatrus_data, EdadMinima= ifelse(grepl("de 0 a 3 años"  ,Edad), 0, 
+                                                      ifelse(grepl("de 3 a 6 años"  ,Edad), 3, 
+                                                      ifelse(grepl("de 6 a 8 años"  ,Edad), 6, 
+                                                      ifelse(grepl("de 8 a 10 años" ,Edad), 8, 
+                                                      ifelse(grepl("de 10 a 14 años",Edad), 10, 
+                                                      ifelse(grepl("de 14 a 18 años",Edad), 14, 
+                                                      ifelse(grepl("más de 18 años" ,Edad), 18, 
+                                                      0))))))))
+
+zacatrus_data <- transform(zacatrus_data, EdadMaxima= ifelse(grepl("más de 18 años" ,Edad), 99, 
+                                                      ifelse(grepl("de 14 a 18 años",Edad), 18, 
+                                                      ifelse(grepl("de 10 a 14 años",Edad), 14, 
+                                                      ifelse(grepl("de 8 a 10 años" ,Edad), 10, 
+                                                      ifelse(grepl("de 6 a 8 años"  ,Edad), 8, 
+                                                      ifelse(grepl("de 3 a 6 años"  ,Edad), 6, 
+                                                      ifelse(grepl("de 0 a 3 años"  ,Edad), 3, 
+                                                      99))))))))
+
+
+zacatrus_data <- select(zacatrus_data,-Edad)
+
+
+```
+
+
+A partir dels valors al camp "Núm..jugadores", construim dues columnes, una amb el nombre mínim, i una altra amb el màxim.
+
+```{r}
+
+
+zacatrus_data <- transform(zacatrus_data, Núm..jugadores = str_replace_all(Núm..jugadores, " ", ""))
+zacatrus_data <- transform(zacatrus_data, NumJugadoresMinimo = substr(Núm..jugadores,1,1))
+zacatrus_data <- transform(zacatrus_data, NumJugadoresMaximo = ifelse(grepl("+8",Núm..jugadores) , "+8", substr(Núm..jugadores,stri_length(Núm..jugadores),stri_length(Núm..jugadores))))
+
+
+zacatrus_data <- select(zacatrus_data,-Núm..jugadores)
+
+```
+
+A partir dels valors al camp "Tiempo.de.juego", construim dues columnes, una amb el temps mínim, i una altra amb el màxim.
+
+```{r}
+
+
+zacatrus_data <- transform(zacatrus_data, Tiempo.de.juego.mod = str_replace_all(Tiempo.de.juego, regex("[/|x]"), "-"))
+zacatrus_data <- transform(zacatrus_data, Tiempo.de.juego.mod = str_replace_all(Tiempo.de.juego, regex("[^0-9|-]+"), ""))
+zacatrus_data <- transform(zacatrus_data, TiempoDeJuegoMin = as.numeric(str_replace_all(Tiempo.de.juego.mod, regex("-[0-9]*"), "")))
+zacatrus_data <- transform(zacatrus_data, TiempoDeJuegoMax = as.numeric(str_replace_all(Tiempo.de.juego.mod, regex("[0-9]*-"), "")))
+
+
+
+```
+
+
+A partir dels valors al camp "Medidas", construim dues columnes, una amb el temps mínim, i una altra amb el màxim.
+
+```{r}
+
+
+zacatrus_data <- transform(zacatrus_data, Medidas = str_replace_all(Medidas," ", ""))
+
+r <- regexpr("([0-9]+x[0-9]+x[0-9]+)", zacatrus_data$Medidas)
+zacatrus_data$Medidas[which(r != -1)] <- regmatches(zacatrus_data$Medidas, r)
+
+zacatrus_data <- transform(zacatrus_data, Medida1 = as.numeric(str_replace_all(Medidas, regex("x[0-9|x]*"), "")))
+zacatrus_data <- transform(zacatrus_data, Medida2 = str_replace_all(Medidas, regex("x[0-9]*$"), ""))
+zacatrus_data <- transform(zacatrus_data, Medida2 = as.numeric(str_replace_all(Medida2, regex("[0-9|x]*x"), "")))
+zacatrus_data <- transform(zacatrus_data, Medida3 = as.numeric(str_replace_all(Medidas, regex("[0-9|x]*x"), "")))
+
+zacatrus_data <- transform(zacatrus_data, Largo = pmax(Medida1, Medida2, Medida3))
+zacatrus_data <- transform(zacatrus_data, Volumen = Medida1 * Medida2 * Medida3)
+
+```
+
+```{r}
+
+
+select(zacatrus_data,Medidas,Medida1,Medida2,Medida3, Largo, Volumen)
+```
+
+
+```{r}
+
+
+regexpr( "([0-9]+x[0-9]+x[0-9]+)", "305x305x85mm")
+```
