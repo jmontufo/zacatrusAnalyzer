@@ -10,13 +10,17 @@ Comencem carregant les llibreries i les dades del csv
 library(dplyr)
 library(stringr)
 require(stringi)
+library(tidyr)
 
 zacatrus_data <- read.csv("C:\\Users\\Jose\\Dropbox\\UOC\\20202021-02\\TCVD\\Pr2\\games_wih_rating.csv", sep=';', header=TRUE)
 
-
 ```
 
-Eliminem les files dels jocs de kilometre 0
+
+2. Procés de selecció de les dades
+
+
+Primer, eliminem les files dels jocs de kilometre 0
 
 
 ```{r}
@@ -25,7 +29,8 @@ zacatrus_data <- dplyr::filter(zacatrus_data, !grepl("Kilómetro 0",Nombre))
 
 ```
 
-Eliminem les columnes Num..Id, Disponibilidad, BGG i Idioma
+
+A continuació, eliminem les columnes Num..Id, Disponibilidad, BGG i Idioma
 
 ```{r}
 
@@ -33,17 +38,58 @@ zacatrus_data <- select(zacatrus_data,-Num..Id, -Disponibilidad, -BGG, -Idioma )
 
 ```
 
-Del nom, ens quedem només amb la primera paraula més gran de 3 lletres
+
+2. Procés de neteja de les dades
+
+2.1 Nom (Nombre)
+
+
+Del nom, ens quedem només amb la primera paraula més gran de 3 lletres. Primer, eliminem tots els caracters que no siguin lletres. Després, mirem si una de les tres primeres paraules és més gran de tres lletres, la utilitzem. Si no, deixem el nom com es troba.
+
+```{r}
+
+
+
+zacatrus_data <- transform(zacatrus_data, Nombre = str_replace_all(Nombre, regex("\\W+"), " "))
+
+num_words <- sapply(strsplit(zacatrus_data$Nombre, " "), length)
+
+zacatrus_data <- transform(zacatrus_data, Nombre= ifelse(stri_length(word(Nombre,1))>3, 
+                                                         word(Nombre,1), 
+                                                         ifelse(num_words > 1 && stri_length(word(Nombre,2))>3, 
+                                                                word(Nombre,2), 
+                                                                ifelse(num_words > 2 && stri_length(word(Nombre,3))>3,
+                                                                       word(Nombre,3),
+                                                                       Nombre))))
+
+```
+
+
+
+
+
+
+
+
+
 
 
 ```{r}
 
-zacatrus_data <- transform(zacatrus_data, Nombre = str_replace_all(Nombre, regex("\\W+"), " "))
-zacatrus_data <- transform(zacatrus_data, Nombre= ifelse(stri_length(word(Nombre,1))>3, word(Nombre,1), ifelse(stri_length(word(Nombre,2))>3, word(Nombre,2), word(Nombre,3))))
+
+
+zacatrus_data <- separate(zacatrus_data, col="Autor", into = c("Autor1", "Autor2", "Autor3", "Autor4", "Autor5", "Autor6"), sep = ",")
+
 
 ```
+
+
+
+
+
+
 A partir dels valors al camp "Temática", construim 42 columnes amb valors booleans que per cada tematica indica si el joc pertany o no.
-[0-9|-]+
+
 
 ```{r}
 
@@ -181,6 +227,9 @@ zacatrus_data <- transform(zacatrus_data, TiempoDeJuegoMin = as.numeric(str_repl
 zacatrus_data <- transform(zacatrus_data, TiempoDeJuegoMax = as.numeric(str_replace_all(Tiempo.de.juego.mod, regex("[0-9]*-"), "")))
 
 
+zacatrus_data <- select(zacatrus_data,-Tiempo.de.juego)
+zacatrus_data <- select(zacatrus_data,-Tiempo.de.juego.mod)
+
 
 ```
 
@@ -203,17 +252,88 @@ zacatrus_data <- transform(zacatrus_data, Medida3 = as.numeric(str_replace_all(M
 zacatrus_data <- transform(zacatrus_data, Largo = pmax(Medida1, Medida2, Medida3))
 zacatrus_data <- transform(zacatrus_data, Volumen = Medida1 * Medida2 * Medida3)
 
+zacatrus_data <- select(zacatrus_data,-Medidas)
+
 ```
+
+A partir dels valors al camp "Mecánica", construim 34 columnes amb valors booleans que per cada tematica indica si el joc pertany o no.
+
+```{r}
+
+zacatrus_data <- transform(zacatrus_data, Mec_4X =  grepl("4X",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Arena =  grepl("Arena",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Bazas =  grepl("Bazas",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Col_sets =  grepl("Colección de sets",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Col_losetas =  grepl("Colocación de Losetas",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Col_trab =  grepl("Colocación de trabajadores",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Conquista =  grepl("Conquista de territorio",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Crawler =  grepl("Crawler",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Mazo =  grepl("Creación de mazo",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Deduccion =  grepl("Deducción e Investigación",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Torre =  grepl("Defensa de la Torre",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Draft =  grepl("Draft",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Escaperoom =  grepl("Escape room",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Civilizacion =  grepl("Evolución de Civilización",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Exploracion =  grepl("Exploración y Aventura",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Ges_cartas =  grepl("Gestión de cartas",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Ges_recursos =  grepl("Gestión de recursos",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Habilidad =  grepl("Habilidad",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Palabras =  grepl("Juegos de palabras",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_LCG =  grepl("LCG",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Legacy =  grepl("Legacy",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Mayorias =  grepl("Mayorías",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Memoria =  grepl("Memoria",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Negociacion =  grepl("Negociación",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_PickDeliver =  grepl("Pick & Deliver",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Preg_resp =  grepl("Preguntas y respuestas",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Prog_acciones =  grepl("Programación acciones",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Puzzle =  grepl("Puzzle",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Roles =  grepl("Roles ocultos",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Roll_Write =  grepl("Roll&Write",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Sandbox =  grepl("Sandbox",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Subastas =  grepl("Subastas",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Suerte =  grepl("Tienta la suerte",Mecánica))
+zacatrus_data <- transform(zacatrus_data, Mec_Wargame =  grepl("Wargame",Mecánica))
+
+zacatrus_data <- select(zacatrus_data,-Mecánica)
+
+```
+
+
+
+
+2.x Preu (Precio)
+
+Transformem tots els valors a numèric.
+
+```{r}
+
+zacatrus_data$Precio <- as.numeric(as.character(zacatrus_data$Precio))
+
+```
+
+Creem un nou dataset a on eliminem els registres pels quals no disposem del preu, o el preu és massa baix com per ser un joc de taula.
+
+```{r}
+zacatrus_data_preus_amb_valor <- dplyr::filter(zacatrus_data, Precio >= 3.5)
+zacatrus_data_preus_amb_valor <- dplyr::filter(zacatrus_data_preus_amb_valor, !is.na(Precio))
+
+```
+
+
+
+
+```{r}
+zacatrus_data_preus_amb_valor[order(zacatrus_data_preus_amb_valor$Precio),]
+
+```
+
+
+
+
 
 ```{r}
 
 
-select(zacatrus_data,Medidas,Medida1,Medida2,Medida3, Largo, Volumen)
-```
-
-
-```{r}
-
-
-regexpr( "([0-9]+x[0-9]+x[0-9]+)", "305x305x85mm")
+count(zacatrus_data, is.na(zacatrus_data$Nombre))
 ```
