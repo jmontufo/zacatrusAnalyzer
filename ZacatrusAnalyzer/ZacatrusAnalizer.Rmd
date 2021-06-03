@@ -11,6 +11,7 @@ library(dplyr)
 library(stringr)
 require(stringi)
 library(tidyr)
+library(gdata)
 
 zacatrus_data <- read.csv("C:\\Users\\Jose\\Dropbox\\UOC\\20202021-02\\TCVD\\Pr2\\games_wih_rating.csv", sep=';', header=TRUE)
 
@@ -47,23 +48,23 @@ zacatrus_data <- select(zacatrus_data,-Num..Id, -Disponibilidad, -BGG, -Idioma )
 Del nom, ens quedem només amb la primera paraula més gran de 3 lletres. Primer, eliminem tots els caracters que no siguin lletres. Després, mirem si una de les tres primeres paraules és més gran de tres lletres, la utilitzem. Si no, deixem el nom com es troba.
 
 ```{r}
+zacatrus_data <- transform(zacatrus_data, Nombre = trim(str_replace_all(Nombre, regex("\\W+"), " ")))
 
-zacatrus_data <- transform(zacatrus_data, Nombre = str_replace_all(Nombre, regex("\\W+"), " "))
+zacatrus_data <- separate(zacatrus_data, col="Nombre", into = c("Nombre1", "Nombre2"), sep = " ")
 
-num_words <- sapply(strsplit(zacatrus_data$Nombre, " "), length)
+zacatrus_data$GameFamily <- zacatrus_data$Nombre1
+zacatrus_data$GameFamilyLength <- stri_length(zacatrus_data$GameFamily)
+zacatrus_data$GameFamily [zacatrus_data$GameFamilyLength  < 4][!is.na(zacatrus_data$Nombre2)] <- zacatrus_data$Nombre2 [zacatrus_data$GameFamilyLength < 4][!is.na(zacatrus_data$Nombre2)]
 
-zacatrus_data <- transform(zacatrus_data, Nombre= ifelse(stri_length(word(Nombre,1))>3, 
-                                                         word(Nombre,1), 
-                                                         ifelse(num_words > 1 && stri_length(word(Nombre,2))>3, 
-                                                                word(Nombre,2), 
-                                                                ifelse(num_words > 2 && stri_length(word(Nombre,3))>3,
-                                                                       word(Nombre,3),
-                                                                       Nombre))))
+zacatrus_data$GameFamily[is.na(zacatrus_data$GameFamily)] <- "Desconocido"
 
+zacatrus_data$Nombre <- as.factor(zacatrus_data$GameFamily)
+
+zacatrus_data <- select(zacatrus_data, -GameFamily, -GameFamilyLength)
 ```
 
 
-2.1 Autor
+2.2 Autor
 
 
 Separem els autors que han creat el joc en 6 columnes amb un autor a cadascuna d'elles.
@@ -78,12 +79,12 @@ zacatrus_data <- separate(zacatrus_data, col="Autor", into = c("Autor1", "Autor2
 ```{r}
 
 zacatrus_data$Autor1[zacatrus_data$Autor1 == ''] <- NA
-zacatrus_data$Autor1[is.na(zacatrus_data$Autor1)] <- "Desconegut"
-zacatrus_data$Autor2[is.na(zacatrus_data$Autor2)] <- "Desconegut"
-zacatrus_data$Autor3[is.na(zacatrus_data$Autor3)] <- "Desconegut"
-zacatrus_data$Autor4[is.na(zacatrus_data$Autor4)] <- "Desconegut"
-zacatrus_data$Autor5[is.na(zacatrus_data$Autor5)] <- "Desconegut"
-zacatrus_data$Autor6[is.na(zacatrus_data$Autor6)] <- "Desconegut"
+zacatrus_data$Autor1[is.na(zacatrus_data$Autor1)] <- "Desconocido"
+zacatrus_data$Autor2[is.na(zacatrus_data$Autor2)] <- "Desconocido"
+zacatrus_data$Autor3[is.na(zacatrus_data$Autor3)] <- "Desconocido"
+zacatrus_data$Autor4[is.na(zacatrus_data$Autor4)] <- "Desconocido"
+zacatrus_data$Autor5[is.na(zacatrus_data$Autor5)] <- "Desconocido"
+zacatrus_data$Autor6[is.na(zacatrus_data$Autor6)] <- "Desconocido"
 
 ```
 
@@ -307,14 +308,95 @@ zacatrus_data <- transform(zacatrus_data, Volumen = Medida1 * Medida2 * Medida3)
 
 zacatrus_data <- select(zacatrus_data,-Medidas, -MedidasModif, -Medida1, -Medida2, -Medida3)
 
+
 ```
+
+Eliminem valors extrems
+
+```{r}
+
+zacatrus_data$Largo[zacatrus_data$Largo > 288] <- NA
+zacatrus_data$Volumen[zacatrus_data$Volumen > 4092000] <- NA
+
+```
+
+Finalment, emplenem els valors perduts amb la mitjana de cada atribut
+
+```{r}
+
+aux <- dplyr::filter(zacatrus_data, !is.na(Largo))
+mitjana_largo<-mean(aux$Largo)
+zacatrus_data$Largo[is.na(zacatrus_data$Largo)] <- mitjana_largo
+
+aux <- dplyr::filter(zacatrus_data, !is.na(Volumen))
+mitjana_volumen<-mean(aux$Volumen)
+zacatrus_data$Volumen[is.na(zacatrus_data$Volumen)] <- mitjana_volumen
+
+```
+
+
+2.8 Complexitat(Complejidad)
+
+Com que és un atribut ordinal, transformem els valors a numèric per que els mètodes d'anàlisi puguin aprofitar la informació de l'ordre.
 
 
 ```{r}
-summary(zacatrus_data$Largo)
+
+zacatrus_data$ComplejidadOrd[zacatrus_data$Complejidad == "Fácil"] <- 1
+zacatrus_data$ComplejidadOrd[zacatrus_data$Complejidad == "Medio"] <- 2
+zacatrus_data$ComplejidadOrd[zacatrus_data$Complejidad == "Difícil"] <- 3
+
+zacatrus_data <- select(zacatrus_data,-Complejidad)
+
+
 ```
 
+Per als valors nuls, triem posar el nivell mitjà
 
+```{r}
+
+zacatrus_data$ComplejidadOrd[is.na(zacatrus_data$ComplejidadOrd)] <- 2
+names(zacatrus_data)[names(zacatrus_data) == "ComplejidadOrd"] <- "Complejidad"
+```
+
+2.9 Editorial
+
+Els valors buits els substituim pel valor "Desconocido":
+
+```{r}
+
+zacatrus_data$EditorialAux <- as.character(zacatrus_data$Editorial)
+zacatrus_data$EditorialAux[zacatrus_data$Editorial == ""] <- "Desconocida"
+zacatrus_data$Editorial <- as.factor(zacatrus_data$EditorialAux )
+```
+
+2.10 Dependència de l'idioma
+
+Com que és un atribut ordinal, transformem els valors a numèric per que els mètodes d'anàlisi puguin aprofitar la informació de l'ordre.
+
+
+```{r}
+
+zacatrus_data$DependenciaOrd[zacatrus_data$Dependencia.del.idioma == "Nula (Sólo instrucciones)"] <- 1
+zacatrus_data$DependenciaOrd[zacatrus_data$Dependencia.del.idioma == "Poca"] <- 2
+zacatrus_data$DependenciaOrd[zacatrus_data$Dependencia.del.idioma == "Media"] <- 3
+zacatrus_data$DependenciaOrd[zacatrus_data$Dependencia.del.idioma == "Alta"] <- 4
+zacatrus_data$DependenciaOrd[zacatrus_data$Dependencia.del.idioma == "Devir"] <- NA
+
+zacatrus_data <- select(zacatrus_data,-Dependencia.del.idioma)
+
+
+```
+
+Per als valors nuls, triem posar el nivell mitjà
+
+```{r}
+
+zacatrus_data$DependenciaOrd[is.na(zacatrus_data$DependenciaOrd)] <- 2.5
+names(zacatrus_data)[names(zacatrus_data) == "DependenciaOrd"] <- "Dependencia.del.idioma"
+```
+
+2.11 Si Buscas...
 
 A partir dels valors al camp "Mecánica", construim 34 columnes amb valors booleans que per cada tematica indica si el joc pertany o no.
 
@@ -359,10 +441,7 @@ zacatrus_data <- select(zacatrus_data,-Mecánica)
 
 ```
 
-
-
-
-2.x Preu (Precio)
+2.12 Preu (Precio)
 
 Transformem tots els valors a numèric.
 
@@ -389,11 +468,24 @@ zacatrus_data_preus_amb_valor[order(zacatrus_data_preus_amb_valor$Precio),]
 ```
 
 
+2.12 Puntuació (Ranking) 
 
-
+Transformem tots els valors a numèric.
 
 ```{r}
-
-
-count(zacatrus_data, is.na(zacatrus_data$Nombre))
+zacatrus_data$Puntuacio <- as.double(str_replace_all(as.character(zacatrus_data$ranking), ",", "."))
 ```
+
+Creem un nou dataset a on eliminem els registres pels quals no disposem de la puntuació o és 0
+
+```{r}
+zacatrus_data_amb_puntuacio <- dplyr::filter(zacatrus_data, Puntuacio >= 0)
+zacatrus_data_amb_puntuacio <- dplyr::filter(zacatrus_data_amb_puntuacio, !is.na(Puntuacio))
+
+```
+```{r}
+
+zacatrus_data_amb_puntuacio[order(zacatrus_data_amb_puntuacio$Puntuacio),]
+```
+
+
