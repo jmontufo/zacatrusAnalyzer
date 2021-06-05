@@ -12,6 +12,7 @@ library(stringr)
 require(stringi)
 library(tidyr)
 library(gdata)
+library(nortest)
 
 zacatrus_data <- read.csv("C:\\Users\\Jose\\Dropbox\\UOC\\20202021-02\\TCVD\\Pr2\\games_wih_rating.csv", sep=';', header=TRUE)
 
@@ -60,7 +61,7 @@ zacatrus_data$GameFamily[is.na(zacatrus_data$GameFamily)] <- "Desconocido"
 
 zacatrus_data$Nombre <- as.factor(zacatrus_data$GameFamily)
 
-zacatrus_data <- select(zacatrus_data, -GameFamily, -GameFamilyLength)
+zacatrus_data <- select(zacatrus_data, -GameFamily, -GameFamilyLength, -Nombre1, -Nombre2)
 ```
 
 
@@ -368,6 +369,9 @@ Els valors buits els substituim pel valor "Desconocido":
 zacatrus_data$EditorialAux <- as.character(zacatrus_data$Editorial)
 zacatrus_data$EditorialAux[zacatrus_data$Editorial == ""] <- "Desconocida"
 zacatrus_data$Editorial <- as.factor(zacatrus_data$EditorialAux )
+
+zacatrus_data <- select(zacatrus_data,-EditorialAux)
+
 ```
 
 2.10 Dependència de l'idioma
@@ -451,19 +455,16 @@ zacatrus_data$Precio <- as.numeric(as.character(zacatrus_data$Precio))
 
 ```
 
-Creem un nou dataset a on eliminem els registres pels quals no disposem del preu, o el preu és massa baix com per ser un joc de taula.
-
-```{r}
-zacatrus_data_preus_amb_valor <- dplyr::filter(zacatrus_data, Precio >= 3.5)
-zacatrus_data_preus_amb_valor <- dplyr::filter(zacatrus_data_preus_amb_valor, !is.na(Precio))
-
-```
-
-
+Com que hem detectat que els jocs que tenen un preu menor de 3.5 són gairebé tots accesoris mal categoritzats com a jocs, els eliminem del dataset
 
 
 ```{r}
-zacatrus_data_preus_amb_valor[order(zacatrus_data_preus_amb_valor$Precio),]
+
+zacatrus_data$Precio[zacatrus_data$Precio == 0] <- NA
+
+zacatrus_data <- dplyr::filter(zacatrus_data, is.na(Precio) | Precio >= 3.5)
+
+zacatrus_data
 
 ```
 
@@ -474,18 +475,194 @@ Transformem tots els valors a numèric.
 
 ```{r}
 zacatrus_data$Puntuacio <- as.double(str_replace_all(as.character(zacatrus_data$ranking), ",", "."))
+
+
+zacatrus_data <- select(zacatrus_data,-ranking)
 ```
 
-Creem un nou dataset a on eliminem els registres pels quals no disposem de la puntuació o és 0
+
+2.13 Creació dels datasets en funció de les dades perdudes als atributs objectiu
+
+Com que les nostres anàlisis tenen dos potencials atributs objectiu, crearem tres datasets diferents:
+
+2.13.1 Dataset amb preu
+
+Primer fem un dataset a on tots els preus siguin valors obtinguts de l'orígen. Per fer-ho, filtrem els que no tenen preu, i posteriorment tractem els valors perduts a "Puntacion" assignant-los la mitjana.
 
 ```{r}
-zacatrus_data_amb_puntuacio <- dplyr::filter(zacatrus_data, Puntuacio >= 0)
-zacatrus_data_amb_puntuacio <- dplyr::filter(zacatrus_data_amb_puntuacio, !is.na(Puntuacio))
+
+zacatrus_data_amb_preu <- dplyr::filter(zacatrus_data, !is.na(Precio))
+
+aux <- dplyr::filter(zacatrus_data, !is.na(Puntuacio))
+
+aux <- dplyr::filter(aux, Puntuacio>0 )
+
+mitjana_puntuacio<-mean(aux$Puntuacio)
+zacatrus_data_amb_preu$Puntuacio[is.na(zacatrus_data_amb_preu$Puntuacio)] <- mitjana_puntuacio
+zacatrus_data_amb_preu$Puntuacio[zacatrus_data_amb_preu$Puntuacio == 0] <- mitjana_puntuacio
 
 ```
+
+
+2.13.2 Dataset amb puntuació
+
+A continuació fem un dataset a on totes les puntuacions siguin valors obtinguts de l'orígen. Per fer-ho, filtrem els que no tenen puntuació, i posteriorment tractem els valors perduts a "Puntacion" assignant-los la mitjana
+
+
+
 ```{r}
 
-zacatrus_data_amb_puntuacio[order(zacatrus_data_amb_puntuacio$Puntuacio),]
+zacatrus_data_amb_puntuacio <- dplyr::filter(zacatrus_data, !is.na(Puntuacio))
+zacatrus_data_amb_puntuacio <- dplyr::filter(zacatrus_data_amb_puntuacio, Puntuacio > 0)
+
+aux <- dplyr::filter(zacatrus_data, !is.na(Precio))
+
+mitjana_preu<-mean(aux$Precio)
+zacatrus_data_amb_puntuacio$Precio[is.na(zacatrus_data_amb_puntuacio$Preu)] <- mitjana_preu
+
+
 ```
 
+
+2.13.2 Dataset amb preu puntuació
+
+A continuació fem un dataset a on tots els preus siguin valors obtinguts de l'orígen, i també les puntuacions.
+
+
+```{r}
+
+zacatrus_data_amb_preu_i_puntuacio <- dplyr::filter(zacatrus_data, !is.na(Precio))
+zacatrus_data_amb_preu_i_puntuacio <- dplyr::filter(zacatrus_data_amb_preu_i_puntuacio, Puntuacio > 0)
+zacatrus_data_amb_preu_i_puntuacio <- dplyr::filter(zacatrus_data_amb_preu_i_puntuacio, !is.na(Puntuacio))
+
+```
+
+3.Anàlisi de les dades 
+
+3.1 Selecció de grups de dades
+
+Abans de seleccionar el grup de dades, simplifiquem els jocs de dades excloent els atributs generats pels atributs multivalor.
+
+
+```{r}
+
+zacatrus_data <- select(zacatrus_data, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+
+zacatrus_data_amb_preu <- select(zacatrus_data_amb_preu, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+
+zacatrus_data_amb_puntuacio <- select(zacatrus_data_amb_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+
+zacatrus_data_amb_preu_i_puntuacio <- select(zacatrus_data_amb_preu_i_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+```
+
+Seleccionem els grups de dades que poden ser interesant comparar.
+
+```{r}
+
+zacatrus_data.star <- zacatrus_data[zacatrus_data$Nombre == "Star",]
+zacatrus_data.pathfinder <- zacatrus_data[zacatrus_data$Nombre == "Pathfinder",]
+zacatrus_data.cancion <- zacatrus_data[zacatrus_data$Nombre == "Canción",]
+
+zacatrus_data.edge <- zacatrus_data[zacatrus_data$Editorial == "Edge Entertainment",]
+zacatrus_data.devir <- zacatrus_data[zacatrus_data$Editorial == "Devir",]
+zacatrus_data.nosolorol <- zacatrus_data[zacatrus_data$Editorial == "Nosolorol",]
+zacatrus_data.fantasyflight <- zacatrus_data[zacatrus_data$Editorial == "Fantasy Flight",]
+
+```
+
+3.2. Comprobació de la normalitat i de la homogeneïtat de la variància
+
+Comprobem la normalitat de tots els atributs numèrics.
+
+```{r}
+
+alpha = 0.05
+col.names = colnames(zacatrus_data)
+for (i in 1:ncol(zacatrus_data) - 2) {
+  if (i == 1) cat("La variable segueix una distribució normal segons el test de Shapiro?\n")
+  if (is.integer(zacatrus_data[,i]) | is.numeric(zacatrus_data[,i])) {
+    cat(col.names[i])
+    cat(": \n")
+    cat("\tShapiro-Wilk ")
+    p_val = shapiro.test(zacatrus_data[,i])$p.value
+    cat(" p-value: ")
+    cat(p_val)
+    if (p_val < alpha) cat(" (NO)")
+    else cat(" (SI)")
+    cat("\n\tAnderson-Darling ")
+    p_val = ad.test(zacatrus_data[,i])$p.value
+    cat(" p-value: ")
+    cat(p_val)
+    if (p_val < alpha) cat(" (NO)")
+    else cat(" (SI)")
+    cat("\n\tKolmogorov-Smirnov ")
+    p_val = ks.test(zacatrus_data[,i], pnorm, mean(zacatrus_data[,i]), sd(zacatrus_data[,i]))$p.value
+    cat(" p-value: ")
+    cat(p_val)
+    if (p_val < alpha) cat(" (NO)\n")
+    else cat(" (SI)\n")
+  }
+}
+
+cat("Precio: \n")
+cat("\tShapiro-Wilk ")
+p_val = shapiro.test(zacatrus_data_amb_preu$Precio)$p.value
+cat(" p-value: ")
+cat(p_val)
+if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
+cat("\n\tAnderson-Darling ")
+p_val = ad.test(zacatrus_data_amb_preu$Precio)$p.value
+cat(" p-value: ")
+cat(p_val)
+if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
+cat("\n\tKolmogorov-Smirnov ")
+p_val = ks.test(zacatrus_data_amb_preu$Precio, pnorm, mean(zacatrus_data_amb_preu$Precio), sd(zacatrus_data_amb_preu$Precio))$p.value
+cat(" p-value: ")
+cat(p_val)
+if (p_val < alpha) cat(" (NO)\n") else cat(" (SI)\n")
+
+
+
+cat("Puntuacio: \n")
+cat("\tShapiro-Wilk ")
+p_val = shapiro.test(zacatrus_data_amb_puntuacio$Puntuacio)$p.value
+cat(" p-value: ")
+cat(p_val)
+if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
+cat("\n\tAnderson-Darling ")
+p_val = ad.test(zacatrus_data_amb_puntuacio$Puntuacio)$p.value
+cat(" p-value: ")
+cat(p_val)
+if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
+cat("\n\tKolmogorov-Smirnov ")
+p_val = ks.test(zacatrus_data_amb_puntuacio$Puntuacio, pnorm, mean(zacatrus_data_amb_puntuacio$Puntuacio), sd(zacatrus_data_amb_puntuacio$Puntuacio))$p.value
+cat(" p-value: ")
+cat(p_val)
+if (p_val < alpha) cat(" (NO)\n") else cat(" (SI)\n")
+
+
+
+```
+
+Comprovem la homogeneïtat de la variància per a tots els parells grup de dades/atribut objectiu.
+
+```{r}
+
+zacatrus_data_per_saga_preu <- dplyr::filter(zacatrus_data_amb_preu, Nombre == "Star" | Nombre == "Pathfinder" | Nombre == "Canción")
+
+fligner.test(Precio ~ Nombre, data = zacatrus_data_per_saga_preu)
+
+zacatrus_data_per_saga_puntuacio <- dplyr::filter(zacatrus_data_amb_puntuacio, Nombre == "Star" | Nombre == "Pathfinder" | Nombre == "Canción")
+
+fligner.test(Puntuacio ~ Editorial, data = zacatrus_data_per_saga_puntuacio)
+
+zacatrus_data_per_editorial_preu <- dplyr::filter(zacatrus_data_amb_preu, Editorial == "Edge Entertainment" | Editorial == "Devir" | Editorial == "Nosolorol" | Editorial == "Fantasy Flight")
+
+fligner.test(Precio ~ Nombre, data = zacatrus_data_per_editorial_preu)
+
+zacatrus_data_per_editorial_puntuacio <- dplyr::filter(zacatrus_data_amb_puntuacio, Editorial == "Edge Entertainment" | Editorial == "Devir" | Editorial == "Nosolorol" | Editorial == "Fantasy Flight")
+
+fligner.test(Puntuacio ~ Editorial, data = zacatrus_data_per_editorial_puntuacio)
+
+```
 
