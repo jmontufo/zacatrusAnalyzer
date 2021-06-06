@@ -568,6 +568,36 @@ zacatrus_data.devir <- zacatrus_data[zacatrus_data$Editorial == "Devir",]
 zacatrus_data.nosolorol <- zacatrus_data[zacatrus_data$Editorial == "Nosolorol",]
 zacatrus_data.fantasyflight <- zacatrus_data[zacatrus_data$Editorial == "Fantasy Flight",]
 
+
+zacatrus_data_amb_preu.star <- zacatrus_data_amb_preu[zacatrus_data$Nombre == "Star",]
+zacatrus_data_amb_preu.pathfinder <- zacatrus_data_amb_preu[zacatrus_data$Nombre == "Pathfinder",]
+zacatrus_data_amb_preu.cancion <- zacatrus_data_amb_preu[zacatrus_data$Nombre == "Canción",]
+
+zacatrus_data_amb_preu.edge <- zacatrus_data_amb_preu[zacatrus_data_amb_preu$Editorial == "Edge Entertainment",]
+zacatrus_data_amb_preu.devir <- zacatrus_data_amb_preu[zacatrus_data_amb_preu$Editorial == "Devir",]
+zacatrus_data_amb_preu.nosolorol <- zacatrus_data_amb_preu[zacatrus_data_amb_preu$Editorial == "Nosolorol",]
+zacatrus_data_amb_preu.fantasyflight <- zacatrus_data_amb_preu[zacatrus_data_amb_preu$Editorial == "Fantasy Flight",]
+
+
+zacatrus_data_amb_puntuacio.star <- zacatrus_data_amb_puntuacio[zacatrus_data_amb_puntuacio$Nombre == "Star",]
+zacatrus_data_amb_puntuacio.pathfinder <- zacatrus_data_amb_puntuacio[zacatrus_data_amb_puntuacio$Nombre == "Pathfinder",]
+zacatrus_data_amb_puntuacio.cancion <- zacatrus_data_amb_puntuacio[zacatrus_data_amb_puntuacio$Nombre == "Canción",]
+
+zacatrus_data_amb_puntuacio.edge <- zacatrus_data_amb_puntuacio[zacatrus_data_amb_puntuacio$Editorial == "Edge Entertainment",]
+zacatrus_data_amb_puntuacio.devir <- zacatrus_data_amb_puntuacio[zacatrus_data_amb_puntuacio$Editorial == "Devir",]
+zacatrus_data_amb_puntuacio.nosolorol <- zacatrus_data_amb_puntuacio[zacatrus_data_amb_puntuacio$Editorial == "Nosolorol",]
+zacatrus_data_amb_puntuacio.fantasyflight <- zacatrus_data_amb_puntuacio[zacatrus_data_amb_puntuacio$Editorial == "Fantasy Flight",]
+
+
+zacatrus_data_amb_preu_i_puntuacio.star <- zacatrus_data_amb_preu_i_puntuacio[zacatrus_data_amb_preu_i_puntuacio$Nombre == "Star",]
+zacatrus_data_amb_preu_i_puntuacio.pathfinder <- zacatrus_data_amb_preu_i_puntuacio[zacatrus_data_amb_preu_i_puntuacio$Nombre == "Pathfinder",]
+zacatrus_data_amb_preu_i_puntuacio.cancion <- zacatrus_data_amb_preu_i_puntuacio[zacatrus_data_amb_preu_i_puntuacio$Nombre == "Canción",]
+
+zacatrus_data_amb_preu_i_puntuacio.edge <- zacatrus_data_amb_preu_i_puntuacio[zacatrus_data_amb_preu_i_puntuacio$Editorial == "Edge Entertainment",]
+zacatrus_data_amb_preu_i_puntuacio.devir <- zacatrus_data_amb_preu_i_puntuacio[zacatrus_data_amb_preu_i_puntuacio$Editorial == "Devir",]
+zacatrus_data_amb_preu_i_puntuacio.nosolorol <- zacatrus_data_amb_preu_i_puntuacio[zacatrus_data_amb_preu_i_puntuacio$Editorial == "Nosolorol",]
+zacatrus_data_amb_preu_i_puntuacio.fantasyflight <- zacatrus_data_amb_preu_i_puntuacio[zacatrus_data_amb_preu_i_puntuacio$Editorial == "Fantasy Flight",]
+
 ```
 
 3.2. Comprobació de la normalitat i de la homogeneïtat de la variància
@@ -698,6 +728,8 @@ print(corr_matrix)
 
 ```
 
+3.3.1.2 Correlació amb la puntuació
+
 ```{r}
 
 corr_matrix <- matrix(nc = 2, nr = 0)
@@ -725,5 +757,45 @@ print(corr_matrix)
 
 ```
 
+3.3.2 Contrast d'anàlisi
 
-3.3.1.2 Correlació amb la puntuació
+3.3.2.1 Preu per saga
+
+```{r}
+zacatrus_data_amb_preu.star.precios <- zacatrus_data_amb_preu.star$Precio
+zacatrus_data_amb_preu.pathfinder.precios <- zacatrus_data_amb_preu.pathfinder$Precio
+zacatrus_data_amb_preu.cancion.precios <- zacatrus_data_amb_preu.cancion$Precio
+
+
+t.test(zacatrus_data_amb_preu.pathfinder.precios, zacatrus_data_amb_preu.star.precios, alternative = "less")
+t.test(zacatrus_data_amb_preu.pathfinder.precios, zacatrus_data_amb_preu.cancion.precios, alternative = "less")
+t.test(zacatrus_data_amb_preu.star.precios, zacatrus_data_amb_preu.cancion.precios, alternative = "less")
+
+```
+
+
+3.3.2.2 Puntuació per editorial
+
+
+```{r}
+zacatrus_data_amb_puntuacio.edge.puntuacions <- zacatrus_data_amb_puntuacio.edge$Puntuacio
+zacatrus_data_amb_puntuacio.nosolorol.puntuacions <- zacatrus_data_amb_puntuacio.nosolorol$Puntuacio
+zacatrus_data_amb_puntuacio.fantasyflight.puntuacions <- zacatrus_data_amb_puntuacio.fantasyflight$Puntuacio
+zacatrus_data_amb_puntuacio.devir.puntuacions <- zacatrus_data_amb_puntuacio.devir$Puntuacio
+
+t.test(zacatrus_data_amb_puntuacio.nosolorol.puntuacions, zacatrus_data_amb_puntuacio.devir.puntuacions, alternative = "less")
+t.test(zacatrus_data_amb_puntuacio.nosolorol.puntuacions, zacatrus_data_amb_puntuacio.edge.puntuacions, alternative = "less")
+t.test(zacatrus_data_amb_puntuacio.devir.puntuacions, zacatrus_data_amb_puntuacio.edge.puntuacions, alternative = "less")
+t.test(zacatrus_data_amb_puntuacio.nosolorol.puntuacions, zacatrus_data_amb_puntuacio.fantasyflight.puntuacions, alternative = "less")
+t.test(zacatrus_data_amb_puntuacio.devir.puntuacions, zacatrus_data_amb_puntuacio.fantasyflight.puntuacions, alternative = "less")
+t.test(zacatrus_data_amb_puntuacio.edge.puntuacions, zacatrus_data_amb_puntuacio.fantasyflight.puntuacions, alternative = "less")
+
+```
+
+
+
+
+
+
+
+
