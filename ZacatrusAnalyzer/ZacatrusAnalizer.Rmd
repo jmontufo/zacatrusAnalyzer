@@ -550,7 +550,7 @@ zacatrus_data <- select(zacatrus_data, Nombre, Editorial,  EdadMinima, EdadMaxim
 
 zacatrus_data_amb_preu <- select(zacatrus_data_amb_preu, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
 
-zacatrus_data_amb_puntuacio <- select(zacatrus_data_amb_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+zacatrus_data_amb_puntuacio <- select(zacatrus_data_amb_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Precio, Puntuacio)
 
 zacatrus_data_amb_preu_i_puntuacio <- select(zacatrus_data_amb_preu_i_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
 ```
@@ -666,3 +666,64 @@ fligner.test(Puntuacio ~ Editorial, data = zacatrus_data_per_editorial_puntuacio
 
 ```
 
+3.3 Proves estadístiques
+
+3.3.1 Correlació 
+
+3.3.1.1 Correlació amb el preu
+
+```{r}
+
+corr_matrix <- matrix(nc = 2, nr = 0)
+colnames(corr_matrix) <- c("estimate", "p-value")
+# Calcular el coeficiente de correlación para cada variable cuantitativa
+# con respecto al campo "precio"
+for (i in 1:(ncol(zacatrus_data_amb_preu) - 1)) {
+  if (is.integer(zacatrus_data_amb_preu[,i]) | is.numeric(zacatrus_data_amb_preu[,i])) {
+    spearman_test = cor.test(zacatrus_data_amb_preu[,i], zacatrus_data_amb_preu[,length(zacatrus_data_amb_preu)], method = "spearman")
+    corr_coef = spearman_test$estimate
+    p_val = spearman_test$p.value
+    # Add row to matrix
+    pair = matrix(ncol = 2, nrow = 1)
+    pair[1][1] = corr_coef
+    pair[2][1] = p_val
+    corr_matrix <- rbind(corr_matrix, pair)
+    rownames(corr_matrix)[nrow(corr_matrix)] <- colnames(zacatrus_data_amb_preu)[i]
+  }
+}
+```
+
+```{r}
+print(corr_matrix)
+
+```
+
+```{r}
+
+corr_matrix <- matrix(nc = 2, nr = 0)
+colnames(corr_matrix) <- c("estimate", "p-value")
+# Calcular el coeficiente de correlación para cada variable cuantitativa
+# con respecto al campo "precio"
+for (i in 1:(ncol(zacatrus_data_amb_puntuacio) - 1)) {
+  if (is.integer(zacatrus_data_amb_puntuacio[,i]) | is.numeric(zacatrus_data_amb_puntuacio[,i])) {
+    spearman_test = cor.test(zacatrus_data_amb_puntuacio[,i], zacatrus_data_amb_puntuacio[,length(zacatrus_data_amb_puntuacio)], method = "spearman")
+    corr_coef = spearman_test$estimate
+    p_val = spearman_test$p.value
+    # Add row to matrix
+    pair = matrix(ncol = 2, nrow = 1)
+    pair[1][1] = corr_coef
+    pair[2][1] = p_val
+    corr_matrix <- rbind(corr_matrix, pair)
+    rownames(corr_matrix)[nrow(corr_matrix)] <- colnames(zacatrus_data_amb_puntuacio)[i]
+  }
+}
+
+```
+
+```{r}
+print(corr_matrix)
+
+```
+
+
+3.3.1.2 Correlació amb la puntuació
