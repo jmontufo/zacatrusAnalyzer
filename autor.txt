@@ -1,7 +1,0 @@
-data <- read.csv("/home/marta/Documents/uoc/3-20202_TCVD/PRA2/zacatrusScraper-main/games_with_rating.csv", sep=";", header=TRUE) #read csv file and assign to 'data'
-
-autor <- as.data.frame(data[,5], drop=false)
-# a games_with_rating autor es la columna 5 a zacatrus_data es la 3
-
-autors_split <- separate(data = autor, col="data[, 5]", into = c("autor1", "autor2", "autor3", "autor4", "autor5", "autor6"), sep = ",")
-
