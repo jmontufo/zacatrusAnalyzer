@@ -1,6 +1,8 @@
 ---
 title: "Zacatrus Analyzer"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 Comencem carregant les llibreries i les dades del csv 
@@ -13,6 +15,14 @@ require(stringi)
 library(tidyr)
 library(gdata)
 library(nortest)
+library(corrplot)
+library(ggplot2)
+library(ggpubr)
+library(caret)
+
+
+
+theme_set(theme_pubr())
 
 zacatrus_data <- read.csv("C:\\Users\\Jose\\Dropbox\\UOC\\20202021-02\\TCVD\\Pr2\\games_wih_rating.csv", sep=';', header=TRUE)
 
@@ -518,7 +528,7 @@ zacatrus_data_amb_puntuacio <- dplyr::filter(zacatrus_data_amb_puntuacio, Puntua
 aux <- dplyr::filter(zacatrus_data, !is.na(Precio))
 
 mitjana_preu<-mean(aux$Precio)
-zacatrus_data_amb_puntuacio$Precio[is.na(zacatrus_data_amb_puntuacio$Preu)] <- mitjana_preu
+zacatrus_data_amb_puntuacio$Precio[is.na(zacatrus_data_amb_puntuacio$Precio)] <- mitjana_preu
 
 
 ```
@@ -546,13 +556,13 @@ Abans de seleccionar el grup de dades, simplifiquem els jocs de dades excloent e
 
 ```{r}
 
-zacatrus_data <- select(zacatrus_data, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
-
-zacatrus_data_amb_preu <- select(zacatrus_data_amb_preu, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
-
-zacatrus_data_amb_puntuacio <- select(zacatrus_data_amb_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Precio, Puntuacio)
-
-zacatrus_data_amb_preu_i_puntuacio <- select(zacatrus_data_amb_preu_i_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+# zacatrus_data <- select(zacatrus_data, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+# 
+# zacatrus_data_amb_preu <- select(zacatrus_data_amb_preu, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+#  
+# zacatrus_data_amb_puntuacio <- select(zacatrus_data_amb_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Precio, Puntuacio)
+#  
+# zacatrus_data_amb_preu_i_puntuacio <- select(zacatrus_data_amb_preu_i_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
 ```
 
 Seleccionem els grups de dades que poden ser interesant comparar.
@@ -606,27 +616,35 @@ Comprobem la normalitat de tots els atributs numèrics.
 
 ```{r}
 
+zacatrus_data_simp <- select(zacatrus_data, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+
+zacatrus_data_amb_preu_simp <- select(zacatrus_data_amb_preu, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Puntuacio, Precio)
+  
+zacatrus_data_amb_puntuacio_simp <- select(zacatrus_data_amb_puntuacio, Nombre, Editorial,  EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Precio, Puntuacio)
+
+
+
 alpha = 0.05
-col.names = colnames(zacatrus_data)
-for (i in 1:ncol(zacatrus_data) - 2) {
+col.names = colnames(zacatrus_data_simp)
+for (i in 1:ncol(zacatrus_data_simp) - 2) {
   if (i == 1) cat("La variable segueix una distribució normal segons el test de Shapiro?\n")
-  if (is.integer(zacatrus_data[,i]) | is.numeric(zacatrus_data[,i])) {
+  if (is.integer(zacatrus_data_simp[,i]) | is.numeric(zacatrus_data_simp[,i])) {
     cat(col.names[i])
     cat(": \n")
     cat("\tShapiro-Wilk ")
-    p_val = shapiro.test(zacatrus_data[,i])$p.value
+    p_val = shapiro.test(zacatrus_data_simp[,i])$p.value
     cat(" p-value: ")
     cat(p_val)
     if (p_val < alpha) cat(" (NO)")
     else cat(" (SI)")
     cat("\n\tAnderson-Darling ")
-    p_val = ad.test(zacatrus_data[,i])$p.value
+    p_val = ad.test(zacatrus_data_simp[,i])$p.value
     cat(" p-value: ")
     cat(p_val)
     if (p_val < alpha) cat(" (NO)")
     else cat(" (SI)")
     cat("\n\tKolmogorov-Smirnov ")
-    p_val = ks.test(zacatrus_data[,i], pnorm, mean(zacatrus_data[,i]), sd(zacatrus_data[,i]))$p.value
+    p_val = ks.test(zacatrus_data_simp[,i], pnorm, mean(zacatrus_data_simp[,i]), sd(zacatrus_data_simp[,i]))$p.value
     cat(" p-value: ")
     cat(p_val)
     if (p_val < alpha) cat(" (NO)\n")
@@ -636,17 +654,17 @@ for (i in 1:ncol(zacatrus_data) - 2) {
 
 cat("Precio: \n")
 cat("\tShapiro-Wilk ")
-p_val = shapiro.test(zacatrus_data_amb_preu$Precio)$p.value
+p_val = shapiro.test(zacatrus_data_amb_preu_simp$Precio)$p.value
 cat(" p-value: ")
 cat(p_val)
 if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
 cat("\n\tAnderson-Darling ")
-p_val = ad.test(zacatrus_data_amb_preu$Precio)$p.value
+p_val = ad.test(zacatrus_data_amb_preu_simp$Precio)$p.value
 cat(" p-value: ")
 cat(p_val)
 if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
 cat("\n\tKolmogorov-Smirnov ")
-p_val = ks.test(zacatrus_data_amb_preu$Precio, pnorm, mean(zacatrus_data_amb_preu$Precio), sd(zacatrus_data_amb_preu$Precio))$p.value
+p_val = ks.test(zacatrus_data_amb_preu_simp$Precio, pnorm, mean(zacatrus_data_amb_preu_simp$Precio), sd(zacatrus_data_amb_preu_simp$Precio))$p.value
 cat(" p-value: ")
 cat(p_val)
 if (p_val < alpha) cat(" (NO)\n") else cat(" (SI)\n")
@@ -655,17 +673,17 @@ if (p_val < alpha) cat(" (NO)\n") else cat(" (SI)\n")
 
 cat("Puntuacio: \n")
 cat("\tShapiro-Wilk ")
-p_val = shapiro.test(zacatrus_data_amb_puntuacio$Puntuacio)$p.value
+p_val = shapiro.test(zacatrus_data_amb_puntuacio_simp$Puntuacio)$p.value
 cat(" p-value: ")
 cat(p_val)
 if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
 cat("\n\tAnderson-Darling ")
-p_val = ad.test(zacatrus_data_amb_puntuacio$Puntuacio)$p.value
+p_val = ad.test(zacatrus_data_amb_puntuacio_simp$Puntuacio)$p.value
 cat(" p-value: ")
 cat(p_val)
 if (p_val < alpha) cat(" (NO)") else cat(" (SI)")
 cat("\n\tKolmogorov-Smirnov ")
-p_val = ks.test(zacatrus_data_amb_puntuacio$Puntuacio, pnorm, mean(zacatrus_data_amb_puntuacio$Puntuacio), sd(zacatrus_data_amb_puntuacio$Puntuacio))$p.value
+p_val = ks.test(zacatrus_data_amb_puntuacio_simp$Puntuacio, pnorm, mean(zacatrus_data_amb_puntuacio_simp$Puntuacio), sd(zacatrus_data_amb_puntuacio_simp$Puntuacio))$p.value
 cat(" p-value: ")
 cat(p_val)
 if (p_val < alpha) cat(" (NO)\n") else cat(" (SI)\n")
@@ -778,6 +796,7 @@ t.test(zacatrus_data_amb_preu.star.precios, zacatrus_data_amb_preu.cancion.preci
 
 
 ```{r}
+
 zacatrus_data_amb_puntuacio.edge.puntuacions <- zacatrus_data_amb_puntuacio.edge$Puntuacio
 zacatrus_data_amb_puntuacio.nosolorol.puntuacions <- zacatrus_data_amb_puntuacio.nosolorol$Puntuacio
 zacatrus_data_amb_puntuacio.fantasyflight.puntuacions <- zacatrus_data_amb_puntuacio.fantasyflight$Puntuacio
@@ -792,10 +811,137 @@ t.test(zacatrus_data_amb_puntuacio.edge.puntuacions, zacatrus_data_amb_puntuacio
 
 ```
 
+3.3.3 Regresió linial
+
+Preus per puntuació
+
+```{r}
+
+regr_punt<-lm(Precio~Puntuacio, data=zacatrus_data_amb_preu)
+
+summary(regr_punt)
 
 
+```
 
 
+Preus per puntuació i editorial
 
+```{r}
+
+regr_punt_edit<-lm(Precio~Puntuacio+Editorial, data=zacatrus_data_amb_preu)
+
+summary(regr_punt)
+
+
+```
+
+Preus per atributs quantitatius
+
+```{r}
+
+regr_qtt<-lm(Precio~Puntuacio+EdadMinima+EdadMaxima+NumJugadoresMinimo+NumJugadoresMaximo+Largo+Volumen+Complejidad+Dependencia.del.idioma, data=zacatrus_data_amb_preu)
+summary(regr_qtt)
+
+
+```
+
+Preus per la resta d'atributs tret de Nombre i Autors
+
+```{r}
+
+regr_tot_ex_nom_aut<-lm(Precio~Puntuacio+Editorial+Tem_Abstracto+Tem_Comercio+Tem_Egipto+Tem_Medicina+Tem_Oriental+Tem_Trenes+Tem_Agricultura+Tem_Cómic+Tem_Electrónica+Tem_Medieval+Tem_Piratas+Tem_Audiovisual+Tem_Animales+Tem_Cuentos+Tem_EspadaBrujería+Tem_Misterio+Tem_Politica+Tem_Urbano+Tem_ArteLiteratura+Tem_Cyberpunk+Tem_Fantasía+Tem_Mitología+Tem_Postapocalíptico+Tem_Vampiros+Tem_Carreras+Tem_Deportes+Tem_Gastronómica+Tem_Música+Tem_Steampunk+Tem_Videojuegos+Tem_Ciencia+Tem_Detectivesca+Tem_Historia+Tem_Naturaleza+Tem_Superhéroes+Tem_Vikingos+Tem_CienciaFicción+Tem_Dinosaurios+Tem_Maya+Tem_Oeste+Tem_Terror+Tem_Zombies+SiB_Ameritrash+SiB_Cooperativo+SiB_Eurogame+SiB_Experiencia+SiB_Familiares+SiB_Fiesta+SiB_Infantil+SiB_Narrativo+SiB_ParaDos+SiB_Rápido+SiB_Solitario+SiB_Viaje+EdadMinima+EdadMaxima+NumJugadoresMinimo+NumJugadoresMaximo+TiempoDeJuegoMin+TiempoDeJuegoMax+Largo+Volumen+Complejidad+Editorial+Dependencia.del.idioma+Mec_4X+Mec_Arena+Mec_Bazas+Mec_Col_sets+Mec_Col_losetas+Mec_Col_trab+Mec_Conquista+Mec_Crawler+Mec_Mazo+Mec_Deduccion+Mec_Torre+Mec_Draft+Mec_Escaperoom+Mec_Civilizacion+Mec_Exploracion+Mec_Ges_cartas+Mec_Ges_recursos+Mec_Habilidad+Mec_Palabras+Mec_LCG+Mec_Legacy+Mec_Mayorias+Mec_Memoria+Mec_Negociacion+Mec_PickDeliver+Mec_Preg_resp+Mec_Prog_acciones+Mec_Puzzle+Mec_Roles+Mec_Roll_Write+Mec_Sandbox+Mec_Subastas+Mec_Suerte+Mec_Wargame, data=zacatrus_data_amb_preu)
+
+summary(regr_tot_ex_nom_aut)
+
+```
+
+Preus per puntuació amb Leave One Out
+
+```{r}
+
+ctrl <- trainControl(method="LOOCV")
+model <- train(Precio~Puntuacio,data=zacatrus_data_amb_preu,method="lm",trControl=ctrl)
+print(model)
+
+```
+
+Preus per atributs quantitatius amb Leave One Out
+
+```{r}
+
+model <- train(Precio~Puntuacio+EdadMinima+EdadMaxima+NumJugadoresMinimo+NumJugadoresMaximo+Largo+Volumen+Complejidad+Dependencia.del.idioma,data=zacatrus_data_amb_preu,method="lm",trControl=ctrl)
+
+print(model)
+
+```
+
+4. Gràfiques i taules
+
+4.1 Desviacions estandar de les puntuacions per editorial
+
+```{r}
+
+sd(zacatrus_data_amb_puntuacio.devir$Puntuacio)
+sd(zacatrus_data_amb_puntuacio.edge$Puntuacio)
+sd(zacatrus_data_amb_puntuacio.fantasyflight$Puntuacio)
+sd(zacatrus_data_amb_puntuacio.nosolorol$Puntuacio)
+
+```
+EdadMinima              0.40693327 1.179238e-40
+EdadMaxima              0.09438221 2.997109e-03
+NumJugadoresMinimo     -0.22013979 2.686232e-12
+NumJugadoresMaximo     -0.21710092 5.412682e-12
+TiempoDeJuegoMin        0.46048671 5.839900e-53
+TiempoDeJuegoMax        0.50111348 7.135198e-64
+Largo                   0.08650251 6.542707e-03
+Volumen                 0.16190563 3.156626e-07
+Complejidad             0.33678431 1.332237e-27
+Dependencia.del.idioma  0.20625966 6.060898e-11
+Precio   
+
+4.2 Matriu de correlacions entre atributs numèrics
+
+```{r}
+
+corr.res<-cor(select(zacatrus_data_amb_preu, EdadMinima, EdadMaxima, NumJugadoresMinimo, NumJugadoresMaximo, TiempoDeJuegoMin, TiempoDeJuegoMax, Largo, Volumen, Complejidad, Dependencia.del.idioma, Precio))
+
+corrplot(corr.res,method="circle")
+
+```
+
+4.3 Relació Temps de joc màxim / Preu
+
+
+```{r}
+
+plot(zacatrus_data_amb_puntuacio$Precio,zacatrus_data_amb_puntuacio$TiempoDeJuegoMax,xlab="Preu",ylab="Temps de joc màxim")
+
+```
+
+4.4 Preu per Saga
+
+```{r}
+
+my3cols <- c("#E7B800", "#2E9FDF", "#FC4E07", "#7CFC00")
+
+p <- ggplot(zacatrus_data_per_saga_preu, aes(x = Nombre, y = Precio))
+bxp <- p + geom_boxplot(aes(color = Nombre)) +
+  scale_color_manual(values = my3cols)
+ 
+bxp
+```
+
+4.5 Puntuació per editorial
+
+
+```{r}
+
+p <- ggplot(zacatrus_data_per_editorial_puntuacio, aes(x = Editorial, y = Puntuacio))
+bxp <- p + geom_boxplot(aes(color = Editorial)) +
+  scale_color_manual(values = my3cols)
+ 
+bxp
+```
 
 
